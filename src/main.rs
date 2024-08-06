@@ -1,14 +1,8 @@
 use anyhow::{self, Context};
 use std::collections::HashMap;
-use tree_sitter::{Node, Parser, TreeCursor};
+use tree_sitter::{Node, Parser};
 
 fn main() -> anyhow::Result<()> {
-    let mut parser = Parser::new();
-    let language = tree_sitter_rust::language();
-    parser
-        .set_language(&language)
-        .context("Failed to load Rust grammar")?;
-
     let code = r#"
     fn example() {
         obj.foo();
@@ -16,8 +10,25 @@ fn main() -> anyhow::Result<()> {
     }
     "#;
 
+    let call_map = find_function_calls(code.to_string())?;
+
+    for (k, v) in call_map.iter() {
+        for f in v {
+            println!("{} calls {}", k, f);
+        }
+    }
+    Ok(())
+}
+
+fn find_function_calls(code: String) -> anyhow::Result<HashMap<String, Vec<String>>> {
+    let mut parser = Parser::new();
+    let language = tree_sitter_rust::language();
+    parser
+        .set_language(&language)
+        .context("Failed to load Rust grammar")?;
+
     let tree = parser
-        .parse(code, None)
+        .parse(code.clone(), None)
         .context("Failed to parse source code")?;
     let mut cursor = tree.walk();
 
@@ -41,19 +52,14 @@ fn main() -> anyhow::Result<()> {
     while cursor.goto_next_sibling() {
         inspect(
             cursor.node(),
-            code,
+            &code,
             level,
             function_name.clone(),
             &mut calls,
         );
     }
 
-    for (k, v) in calls.iter() {
-        for f in v {
-            println!("{} calls {}", k, f);
-        }
-    }
-    Ok(())
+    Ok(calls)
 }
 
 fn inspect(
