@@ -8,5 +8,6 @@ name = "ct"
 path = "src/main.rs"
 
 [dependencies]
+anyhow = "1"
 tree-sitter = "0.22"
 tree-sitter-rust = "0.21"
