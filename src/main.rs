@@ -3,7 +3,6 @@ use clap::{Args, Parser as ClapParser, Subcommand};
 use std::{collections::HashMap, io::Read};
 use tree_sitter::{Node, Parser};
 
-/// Simple program to greet a person
 #[derive(ClapParser)]
 #[command(version, about, long_about = None)]
 struct Cli {
@@ -49,9 +48,9 @@ fn main() -> anyhow::Result<()> {
 
 fn find_function_calls(code: String) -> anyhow::Result<HashMap<String, Vec<String>>> {
     let mut parser = Parser::new();
-    let language = tree_sitter_rust::language();
+    let language = tree_sitter_rust::LANGUAGE;
     parser
-        .set_language(&language)
+        .set_language(&language.into())
         .context("Failed to load Rust grammar")?;
 
     let tree = parser
