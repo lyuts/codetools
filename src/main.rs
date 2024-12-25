@@ -4,6 +4,7 @@ mod dataflow;
 use anyhow::{self, Context};
 use clap::{Args, Parser as ClapParser, Subcommand};
 use std::io::Read;
+use tracing::{info, Level};
 
 #[derive(ClapParser)]
 #[command(version, about, long_about = None)]
@@ -32,6 +33,15 @@ struct DataFlowArgs {
 }
 
 fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_file(true)
+        .with_level(true)
+        .with_line_number(true)
+        .with_max_level(Level::TRACE)
+        .with_target(false)
+        .with_thread_names(true)
+        .init();
+
     let args = Cli::parse();
 
     match &args.command {
@@ -50,7 +60,7 @@ fn main() -> anyhow::Result<()> {
 
             for (k, v) in call_map.iter() {
                 for f in v {
-                    println!("{} calls {}", k, f);
+                    info!("{} calls {}", k, f);
                 }
             }
         }
@@ -66,7 +76,7 @@ fn main() -> anyhow::Result<()> {
 
             let data = dataflow::find_accessible_data(&cmd.function, &code.to_string())
                 .context("Failed to process file.")?;
-            println!("{} has access to {:?}", cmd.function, data);
+            info!("{} has access to {:?}", cmd.function, data);
         }
     }
     Ok(())

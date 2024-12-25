@@ -1,4 +1,5 @@
 use anyhow::Context;
+use tracing::{debug, trace, warn};
 use tree_sitter::Parser;
 
 #[derive(Debug, PartialEq)]
@@ -29,12 +30,11 @@ pub fn find_accessible_data(function_name: &str, code: &str) -> anyhow::Result<V
                     let start = name_node.start_byte();
                     let end = name_node.end_byte();
                     let actual_name = &code[start..end];
-                    println!("Found function definition {}", actual_name);
+                    trace!("Found function definition {}", actual_name);
                     if actual_name == function_name {
-                        println!("Inspecting data...");
+                        trace!("Inspecting data...");
                         let params_node = cursor.node().child_by_field_name("parameters").unwrap();
-                        println!(">>> parameters found {}", params_node);
-                        // println!(">>> parameters found 2 {}", params_node.children_by_field_name("parameter", &mut cursor).count());
+                        trace!("parameters found {}", params_node);
                         for child in params_node.children(&mut cursor) {
                             if child.kind() == "parameter" {
                                 let pattern_node = child.child_by_field_name("pattern").unwrap();
@@ -44,7 +44,7 @@ pub fn find_accessible_data(function_name: &str, code: &str) -> anyhow::Result<V
                                     &code[pattern_node.start_byte()..pattern_node.end_byte()];
                                 let type_name = &code[type_node.start_byte()..type_node.end_byte()];
 
-                                println!("patter = {}, type = {}", pattern, type_name);
+                                trace!("pattern = {}, type = {}", pattern, type_name);
                                 variables.push(Parameter {
                                     name: pattern.to_string(),
                                     r#type: type_name.to_string(),
@@ -61,7 +61,7 @@ pub fn find_accessible_data(function_name: &str, code: &str) -> anyhow::Result<V
                         //     }
                         // }
 
-                        println!(
+                        debug!(
                             "Data accessible in function '{}': {:?}",
                             function_name, variables
                         );
@@ -75,7 +75,7 @@ pub fn find_accessible_data(function_name: &str, code: &str) -> anyhow::Result<V
             }
         }
     } else {
-        println!("Function '{}' not found in the code.", function_name);
+        warn!("Function '{}' not found in the code.", function_name);
     }
     Ok(variables)
 }
